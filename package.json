@@ -2,10 +2,10 @@
   "name": "camping-api",
   "version": "1.0.0",
   "description": "API for managing a camping site",
-  "main": "app.js",
+  "main": "app.mjs",
   "scripts": {
-    "start": "node app.js",
-    "dev": "nodemon app.js"
+    "start": "node app.mjs",
+    "dev": "nodemon app.mjs"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

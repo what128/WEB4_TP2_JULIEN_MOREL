@@ -1,6 +1,6 @@
-const mongoose = require("mongoose");
+import {Schema, model} from "mongoose";
 
-const userSchema = new mongoose.Schema(
+const userSchema = new Schema(
   {
     firstName: { type: String,
       required: [true, "Le prénom est requis."]
@@ -30,7 +30,14 @@ const userSchema = new mongoose.Schema(
     },
   ]
   },
-    phone: { type: String },
+    phone: { type: String,
+      validate: {
+        validator: function(v){
+          const phoneRegex = /^[\d]{10}$/;
+          return phoneRegex.test(v);
+        }
+      }
+     },
     password: { type: String },
     role: {
       type: String,
@@ -45,4 +52,4 @@ const userSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
-module.exports = mongoose.model("User", userSchema);
+export default model("User", userSchema);

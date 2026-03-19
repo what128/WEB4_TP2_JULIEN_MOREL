@@ -1,7 +1,7 @@
-const User = require("../models/User");
-const Campsite = require("../models/Campsite");
-const Reservation = require("../models/Reservation");
-const mongoose = require("mongoose");
+import User from "../models/user.mjs";
+import Campsite from "../models/campsite.mjs";
+import Reservation from "../models/reservation.mjs";
+import mongoose from "mongoose";
 
 const seedDatabase = async (req, res) => {
   try {
@@ -411,4 +411,4 @@ const seedDatabase = async (req, res) => {
   }
 };
 
-module.exports = { seedDatabase };
+export { seedDatabase };

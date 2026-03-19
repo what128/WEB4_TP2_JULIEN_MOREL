@@ -1,6 +1,6 @@
-const mongoose = require("mongoose");
+import {Schema, model} from "mongoose";
 
-const campsiteSchema = new mongoose.Schema(
+const campsiteSchema = new Schema(
   {
     name: {
       type: String,
@@ -30,7 +30,7 @@ const campsiteSchema = new mongoose.Schema(
         validator: function (v){
           return v > 0;
         },
-        message: "Le prix par nuit doit être supérieur à 0$."
+        message: "Le prix par nuit doit être supérieur à 0."
       }
      },
     capacity: { 
@@ -73,4 +73,4 @@ const campsiteSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
-module.exports = mongoose.model("Campsite", campsiteSchema);
+export default model("Campsite", campsiteSchema);

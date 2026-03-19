@@ -1,6 +1,9 @@
-const express = require("express");
-const mongoose = require("mongoose");
-const dotenv = require("dotenv");
+import express from "express";
+import mongoose from "mongoose";
+import campsiteRoutes from "./routes/campsites.mjs";
+import reservationRoutes from "./routes/reservations.mjs";
+import dbRoutes from "./routes/db.mjs";
+import dotenv from "dotenv";
 
 dotenv.config();
 
@@ -18,9 +21,13 @@ mongoose
   .catch((err) => console.log(err));
 
 // Routes
-const dbRoutes = require("./routes/db");
+
 
 app.use("/api/db", dbRoutes);
+
+app.use("/api/campsites", campsiteRoutes);
+app.use("/api/reservations", reservationRoutes);
+
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {

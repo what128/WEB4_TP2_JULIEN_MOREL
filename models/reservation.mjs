@@ -1,14 +1,14 @@
-const mongoose = require("mongoose");
+import {Schema, model} from "mongoose";
 
-const reservationSchema = new mongoose.Schema(
+const reservationSchema = new Schema(
   {
     user: { 
-      type: mongoose.Schema.Types.ObjectId, 
+      type: Schema.Types.ObjectId, 
       ref: "User",
       required: [true, "L'utilisateur est requis."]
      },
     campsite: {
-      type: mongoose.Schema.Types.ObjectId,
+      type: Schema.Types.ObjectId,
       ref: "Campsite",
       required: [true, "Le site de campement est requis."]
     },
@@ -16,10 +16,18 @@ const reservationSchema = new mongoose.Schema(
       type: Date,
       required: [true, "La date de début est requise."],
       validate: {
-        validator: function(v) {
-          return this.startDate < this.endDate;
+        validator: async function(v) {
+         if (!this.endDate || v >= this.endDate) return false;
+
+          const autreReservation = await mongoose.model("Reservation").findOne({
+          $or: [
+            { startDate: { $lte: this.endDate }, endDate: { $gte: v } }
+          ]
+        });
+      return !autreReservation;
+
         },
-        message: "La date de début doit être une date précédant la date de fin."
+        message: "La date de début doit être avant la date de fin et ne doit pas être pendant une autre réservation."
       }
     },
     endDate: { 
@@ -27,7 +35,7 @@ const reservationSchema = new mongoose.Schema(
       required: [true, "La date de fin est requise."],
        validate: {
         validator: function(v) {
-          return this > this.startDate;
+          return this.startDate && v > this.startDate;
         },
         message: "La date de début doit être une date précédant la date de fin."
       }
@@ -56,7 +64,13 @@ const reservationSchema = new mongoose.Schema(
       validate: [
         {
           validator: async function(v) {
-            return this.status == "cancelled";
+            if (!this._id) return true;
+
+            const documentExistant = await mongoose.model("Reservation").findById(this._id);
+
+            if (!documentExistant) return true;
+            
+            return documentExistant.status !== "cancelled";
           },
           message: "Une réservation annulée ne peut pas être modifiée."
         }
@@ -66,4 +80,4 @@ const reservationSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
-module.exports = mongoose.model("Reservation", reservationSchema);
+export default model("Reservation", reservationSchema);
