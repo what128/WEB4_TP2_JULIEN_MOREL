@@ -1,6 +1,6 @@
 import Reservation from "../models/reservation.mjs";
 
-export async function getReservationById(req, res){
+export async function getReservationById(req, res, next){
     const id = req.params.id;
     try{
         const uneReservation = await Reservation.findById(id);

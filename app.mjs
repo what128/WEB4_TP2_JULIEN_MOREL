@@ -4,6 +4,7 @@ import campsiteRoutes from "./routes/campsites.mjs";
 import reservationRoutes from "./routes/reservations.mjs";
 import dbRoutes from "./routes/db.mjs";
 import dotenv from "dotenv";
+import { get404, getErrors } from "./controllers/errorController.mjs";
 
 dotenv.config();
 
@@ -27,6 +28,10 @@ app.use("/api/db", dbRoutes);
 
 app.use("/api/campsites", campsiteRoutes);
 app.use("/api/reservations", reservationRoutes);
+
+app.use("/", get404);
+
+app.use(getErrors);
 
 
 const PORT = process.env.PORT || 3000;

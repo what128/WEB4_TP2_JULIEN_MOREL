@@ -3,8 +3,7 @@ import * as reservationController from "../controllers/reservationController.mjs
 
 const router = express.Router();
 
-router.get("/api/reservations/:id", reservationController.getReservationById);
-
-
+router.get("/:id", reservationController.getReservationById);
+console.log(reservationController.getReservationById);
 
 export default router;
