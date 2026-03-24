@@ -8,16 +8,8 @@ const seedDatabase = async (req, res) => {
     // Clear existing data
     await User.deleteMany({});
     await Campsite.deleteMany({});
-    await Reservation.deleteMany({});
+    await Reservation.deleteMany({});    
 
-    // Drop old username index if it exists
-    try {
-      await User.collection.dropIndex("username_1");
-    } catch (e) {
-      // Index might not exist, ignore
-    }
-
-    // Define fixed IDs for predictable testing
     const userIds = [
       new mongoose.Types.ObjectId("507f1f77bcf86cd799439011"), // admin
       new mongoose.Types.ObjectId("507f1f77bcf86cd799439012"), // user1
@@ -55,6 +47,9 @@ const seedDatabase = async (req, res) => {
       new mongoose.Types.ObjectId("507f1f77bcf86cd799439043"), // user1 - Site de randonnée sauvage Sep 1-3 (confirmed)
       new mongoose.Types.ObjectId("507f1f77bcf86cd799439044"), // user1 - RV Premium Sep 5-7 (cancelled)
     ];
+
+    console.log('creation ids');
+    
 
     // Create users
     const admin = new User({
@@ -116,7 +111,8 @@ const seedDatabase = async (req, res) => {
       await user.save();
     }
 
-    // Create campsites of different types (noms en français, secteurs/zones du camping)
+    console.log('creation users');
+
     const campsites = [
       {
         _id: campsiteIds[0],
@@ -398,12 +394,10 @@ const seedDatabase = async (req, res) => {
       await reservation.save();
     }
 
-    res
-      .status(200)
-      .json({
-        message:
-          "Database seeded successfully with users, campsites, and reservations",
-      });
+    res.status(200).json({
+      message:
+        "Database seeded successfully with users, campsites, and reservations",
+    });
   } catch (e) {
     res
       .status(500)

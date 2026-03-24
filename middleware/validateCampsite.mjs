@@ -6,7 +6,7 @@ function stringVide(str){
 export const validateCampsite = (req, res, next) => {
  const {name, location, description, type, pricePerNight, capacity, maxVehicleLength, amenities} = req.body;
 
-if (!name || !location || !type || pricePerNight === undefined || capacity === undefined){
+if (!name || !location || !type || pricePerNight == null || capacity == null){
     const error = new Error(`Le nom, la localisation, le type, le prix par nuit et la capacité du site de campement sont requis.`);
     error.statusCode = 400;
     return next(error);
@@ -31,7 +31,7 @@ if (pricePerNight <= 0){
     return next(error);
 }
 
-if (type.toLowerCase() === "rv" && maxVehicleLength === undefined){
+if (type.toLowerCase() === "rv" && maxVehicleLength == null){
     const error = new Error("Un site de campement de type rv doit avoir une longueur maximale de véhicule.");
     error.statusCode = 400;
     return next(error);

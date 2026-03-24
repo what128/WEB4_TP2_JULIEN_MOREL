@@ -1,4 +1,4 @@
-import {Schema, model} from "mongoose";
+import mongoose, {Schema, model} from "mongoose";
 
 const userSchema = new Schema(
   {
@@ -24,7 +24,7 @@ const userSchema = new Schema(
     {
       validator: async function (v) {
          const existant = await mongoose.model("User").findOne({ email: v });
-        return !existant || existant._id.equals(this._id);
+        return !existant || existant._id == this._id;
     },
     message: "Ce courriel est déjà utilisé."
     },
@@ -38,7 +38,17 @@ const userSchema = new Schema(
         }
       }
      },
-    password: { type: String },
+    password: { type: String,
+      required: [true, "Le mot de passe est requis."],
+      validate: {
+        validator: function(v) {
+          const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$/
+
+          return passwordRegex.test(v);
+        },
+        message: "Le mot de passe doit contenir 8 caractères, dont au moins 1 majuscule, minuscule, caractère spécial et chiffre."
+      }
+     },
     role: {
       type: String,
       enum: {

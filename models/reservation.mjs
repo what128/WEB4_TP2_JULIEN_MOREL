@@ -1,4 +1,4 @@
-import {Schema, model} from "mongoose";
+import mongoose, {Schema, model} from "mongoose";
 
 const reservationSchema = new Schema(
   {
@@ -35,7 +35,7 @@ const reservationSchema = new Schema(
       required: [true, "La date de fin est requise."],
        validate: {
         validator: function(v) {
-          return this.startDate && v > this.startDate;
+          return v > this.startDate;
         },
         message: "La date de début doit être une date précédant la date de fin."
       }

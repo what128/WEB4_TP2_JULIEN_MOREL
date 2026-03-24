@@ -15,7 +15,7 @@ export async function getCampsiteById(req, res, next){
                 status: 200,
                 message: "Site de campement récupéré avec succès",
                 data: unCampSite,
-                path: `/api/campsite/${id}`,
+                path: `/api/campsites/${id}`,
                 timestamp: new Date().toISOString()
             });
         } 
@@ -92,42 +92,33 @@ const {name, location, description, type, pricePerNight, capacity, maxVehicleLen
 function remplacerObjetCampsite(campsite, req) {
     const { name, location, description, type, pricePerNight, capacity, maxVehicleLength, amenities } = req.body;
 
-    // Required fields
     campsite.name = name;
     campsite.location = location;
     campsite.type = type;
     campsite.pricePerNight = pricePerNight;
     campsite.capacity = capacity;
 
-    // Optional fields with same logic as creerObjetCampsite
-    if (maxVehicleLength !== undefined && maxVehicleLength !== null) {
+    if (maxVehicleLength != null) {
         campsite.maxVehicleLength = maxVehicleLength;
-    } else {
-        campsite.maxVehicleLength = undefined;
     }
 
-    if (description !== undefined) {
+    if (description != null) {
         campsite.description = description;
-    } else {
-        campsite.description = undefined;
     }
 
-    if (amenities !== undefined) {
+    if (amenities != null) {
         campsite.amenities = amenities;
-    } else {
-        campsite.amenities = undefined;
     }
 
     return campsite;
 }
 
 export async function createCampsite(req, res, next){
-    campsite = creerObjetCampsite(req);
+   let campsite = creerObjetCampsite(req);
 
     try{
         await campsite.save();
-        res.location(`/api/campsites/${campsite._id}`); // ajout de location au header
-        // retour du code de statut et de l'objet créé
+        res.location(`/api/campsites/${campsite._id}`);
         res.status(201).json({
         status: 201,
         message: "Site de campement ajouté",
@@ -244,5 +235,4 @@ export async function deleteCampsite(req, res, next){
     catch(err){
         next(err);
     }
-
 }
