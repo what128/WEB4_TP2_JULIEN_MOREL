@@ -18,7 +18,6 @@ export const get404 = (err, req, res, next) => {
     }
 }
 
-
 export const getErrors = (err, req, res, next) =>{
     if (err.kind === "ObjectId" && err.name === "CastError"){
         err.statusCode = 400;

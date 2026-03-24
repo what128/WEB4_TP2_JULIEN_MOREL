@@ -38,8 +38,10 @@ const userSchema = new mongoose.Schema(
         }
       }
      },
-    password: { type: String,
-      required: [true, "Le mot de passe est requis."]
+    password: { 
+      type: String,
+      required: [true, "Le mot de passe est requis."],
+      select: false
      },
     role: {
       type: String,
@@ -48,7 +50,8 @@ const userSchema = new mongoose.Schema(
         message: (props) =>{
           return `Le rôle ${props} n'est pas un rôle valide.`;
         }
-      }
+      },
+      default: "user"
     }
   },
   { timestamps: true },
