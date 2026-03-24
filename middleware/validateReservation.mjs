@@ -4,7 +4,7 @@ export const validateReservation = (req, res, next) => {
 const id = req.params.id;
 const {campsite, user, startDate, endDate, guests, totalPrice, status} = req.body;
 
-if (!campsite || !user || !startDate || !endDate || guests == null || totalPrice == null || !status){
+if (!campsite || !user || !startDate || !endDate || totalPrice == null){
     const error = new Error("Le site de campement, l'utilisateur, la date de début et de fin, le nombre d'invités"
         + " ainsi que le prix total sont requis pour une réservation.");
     error.statusCode = 400;
@@ -33,7 +33,7 @@ if (endDate <= startDate){
     return next(error);
 }
 
-if (guests <= 0){
+if (guests != null && guests <= 0){
     const error = new Error("Le nombre d'invités doit être supérieur à 0.");
     error.statusCode = 422;
     return next(error);
@@ -47,13 +47,19 @@ if (totalPrice <= 0){
 
 const possibleStatusValues = ["pending", "confirmed", "cancelled"];
 
-if (!possibleStatusValues.include(status)){
+if (status != null && !possibleStatusValues.include(status)){
    const error = new Error("Le statut de la réservation est invalide.");
     error.statusCode = 400;
     return next(error); 
 }
 
 const reservationCourante = mongoose.model("Reservation").findById(id);
+
+if (req.method == "PATCH" || req.method == "PUT"){
+    const owner = reservationCourante.user;
+
+      // vérification du token
+}
 
 if (req.method == "PATCH")
 {
@@ -63,4 +69,6 @@ if (req.method == "PATCH")
         return next(error);
     }
 }
+
+next();
 }

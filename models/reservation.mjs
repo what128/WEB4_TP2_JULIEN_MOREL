@@ -1,14 +1,14 @@
-import mongoose, {Schema, model} from "mongoose";
+import mongoose from "mongoose";
 
-const reservationSchema = new Schema(
+const reservationSchema = new mongoose.Schema(
   {
     user: { 
-      type: Schema.Types.ObjectId, 
+      type: mongoose.Schema.Types.ObjectId, 
       ref: "User",
       required: [true, "L'utilisateur est requis."]
      },
     campsite: {
-      type: Schema.Types.ObjectId,
+      type: mongoose.Schema.Types.ObjectId,
       ref: "Campsite",
       required: [true, "Le site de campement est requis."]
     },
@@ -80,4 +80,4 @@ const reservationSchema = new Schema(
   { timestamps: true },
 );
 
-export default model("Reservation", reservationSchema);
+export default mongoose.model("Reservation", reservationSchema);

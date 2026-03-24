@@ -116,7 +116,8 @@ export async function replaceReservation(req, res, next){
 }
 
 function creerObjetReservation(req, id = -1){
-const {campsite, user, startDate, endDate, guests, totalPrice, status} = req.body;
+const {campsite, user, startDate, endDate, guests, totalPrice} = req.body;
+const status = "pending";
     let uneReservation = new Reservation({
         campsite,
         user,

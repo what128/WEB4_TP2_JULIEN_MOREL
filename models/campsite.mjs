@@ -1,6 +1,6 @@
-import {Schema, model} from "mongoose";
+import mongoose from "mongoose";
 
-const campsiteSchema = new Schema(
+const campsiteSchema = new mongoose.Schema(
   {
     name: {
       type: String,
@@ -73,4 +73,4 @@ const campsiteSchema = new Schema(
   { timestamps: true },
 );
 
-export default model("Campsite", campsiteSchema);
+export default mongoose.model("Campsite", campsiteSchema);

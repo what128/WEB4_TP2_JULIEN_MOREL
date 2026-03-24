@@ -1,6 +1,6 @@
-import mongoose, {Schema, model} from "mongoose";
+import mongoose from "mongoose";
 
-const userSchema = new Schema(
+const userSchema = new mongoose.Schema(
   {
     firstName: { type: String,
       required: [true, "Le prénom est requis."]
@@ -39,15 +39,7 @@ const userSchema = new Schema(
       }
      },
     password: { type: String,
-      required: [true, "Le mot de passe est requis."],
-      validate: {
-        validator: function(v) {
-          const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$/
-
-          return passwordRegex.test(v);
-        },
-        message: "Le mot de passe doit contenir 8 caractères, dont au moins 1 majuscule, minuscule, caractère spécial et chiffre."
-      }
+      required: [true, "Le mot de passe est requis."]
      },
     role: {
       type: String,
@@ -62,4 +54,4 @@ const userSchema = new Schema(
   { timestamps: true },
 );
 
-export default model("User", userSchema);
+export default mongoose.model("User", userSchema);

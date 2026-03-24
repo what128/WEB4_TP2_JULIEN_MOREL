@@ -30,6 +30,12 @@ export const getErrors = (err, req, res, next) =>{
         err.statusCode = 400;
     }
 
+     if (err.code === 11000) {
+        err.statusCode = 400;
+        const field = Object.keys(err.keyPattern)[0];
+        err.message = `${field} déjà existant`;
+    }
+
     if (!err.statusCode){
         err.statusCode = 500;
     }
