@@ -11,23 +11,20 @@ export const isAuth = (req, res, next) => {
             error: "Non authentifié",
             message: "Non authentifié",
             status: 401,
-            path: req.path,
+            path: req.originalUrl,
             timestamp: new Date().toISOString()
         });
     }
 
     const token = authHeader.split(" ")[1];
 
-
-    console.log("token ", token);
     let decodedToken;
 
     try{
-        decodedToken = jwt.verify(token, process.env.SECRET_JWT);
+        decodedToken = jwt.verify(token, process.env.JWT_SECRET);
 
         req.user = decodedToken;
 
-        console.log("req.user", req.user);
         next();
     }
     catch(err){

@@ -117,6 +117,24 @@ export async function createCampsite(req, res, next){
    let campsite = creerObjetCampsite(req);
 
     try{
+        const parametresRecherche = {
+    name: campsite.name,
+    location: campsite.location,
+    type: campsite.type,
+    pricePerNight: campsite.pricePerNight,
+    capacity: campsite.capacity,
+    maxVehicleLength: campsite.maxVehicleLength || null,
+    amenities: campsite.amenities || [],
+};
+
+        const doublon = await Campsite.findOne(parametresRecherche);
+
+        if (doublon){
+            const error = new Error("Un site de camping identique existe déjà.");
+            error.statusCode = 409;
+            throw error;
+        }
+
         await campsite.save();
         res.location(`/api/campsites/${campsite._id}`);
         res.status(201).json({

@@ -23,8 +23,8 @@ const userSchema = new mongoose.Schema(
     },
     {
       validator: async function (v) {
-         const existant = await mongoose.model("User").findOne({ email: v });
-        return !existant || existant._id == this._id;
+        const existant = await mongoose.model("User").findOne({email: v, _id: { $ne: this._id }});
+        return !existant;
     },
     message: "Ce courriel est déjà utilisé."
     },
