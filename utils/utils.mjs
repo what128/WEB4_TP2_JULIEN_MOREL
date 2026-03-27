@@ -39,10 +39,14 @@ export const validatePhone = (phone) => {
 export const validateRole = (role) => {
 const allowedRoles = ["user", "admin"];
 
-    if (!allowedRoles.includes(role)){
+    if (!allowedRoles.includes(role.toLowerCase())){
         return false;
     }
     return true;
+}
+
+export const validateRoleAdmin = (role) => {
+    return validateRole(role) && role.toLowerCase() === "admin";
 }
 
 export const stringVide = (str) => {

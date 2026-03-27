@@ -1,6 +1,7 @@
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 import User from "../models/user.mjs";
+import * as utils from "../utils/utils.mjs";
 
 dotenv.config();
 
@@ -9,6 +10,16 @@ function return401(res, req){
             error: "Non authentifié",
             message: "Non authentifié",
             status: 401,
+            path: req.originalUrl,
+            timestamp: new Date().toISOString()
+        });
+}
+
+function return403(res, req){
+    return res.status(403).json({
+            error: "Accès refusé",
+            message: "Vous n'avez pas l'autorisation d'accéder à cette ressource.",
+            status: 403,
             path: req.originalUrl,
             timestamp: new Date().toISOString()
         });
@@ -47,11 +58,9 @@ if (!token){
 
 const role = token.role;
 
-if (!role){
-      return return401(res, req);
+if (!utils.validateRoleAdmin(role)){
+      return return403(res, req);
 }
 
-
-
-
+next();
 }
