@@ -1,45 +1,44 @@
 import mongoose from "mongoose";
-
-function stringVide(str){
-    return (!str || str.trim() === "");
-}
+import User from "../models/user.mjs";
+import * as utils from "../utils/utils.mjs";
 
 export const validateUser = async (req, res, next) => {
     const {firstName, lastName, email, phone, password, role} = req.body;
+    console.log("start validate user");
 
-    if (!firstName || !lastName || !email || !password || !role){
+    if (!utils.validateFieldsNotEmpty([firstName, lastName, email, password, role])){
         const error = new Error(`Le nom complet, le courriel, le mot de passe et le rôle de l'utilisateur sont requis.`);
         error.statusCode = 400;
         return next(error);  
     }
+    console.log("start validate first name");
 
-    if (stringVide(firstName)){
+    if (utils.stringVide(firstName)){
         const error = new Error(`Le prénom est invalide.`);
         error.statusCode = 422;
         return next(error);  
     }
 
-    if (stringVide(lastName)){
+    if (utils.stringVide(lastName)){
         const error = new Error(`Le nom est invalide.`);
         error.statusCode = 422;
         return next(error); 
     }
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)){
+    if (!utils.validateEmail(email)){
         const error = new Error(`Le courriel n'a pas un format valide.`);
         error.statusCode = 422;
         return next(error); 
     }
 
-    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$/;
-    if (!passwordRegex.test(password)){
+    if (!utils.validatePassword(password)){
         const error = new Error(`Le mot de passe doit contenir 8 caractères, dont au moins 1 majuscule, minuscule, caractère spécial et chiffre.`);
         error.statusCode = 422;
         return next(error);
     }
 
-    const unUtilisateur = await mongoose.model("User").findOne({ email: email });
+    console.log("start finding user");
+    const unUtilisateur = await User.findOne({ email: email });
 
     if (unUtilisateur != null){
         const error = new Error(`Un utilisateur avec ce même courriel existe déjà.`);
@@ -47,16 +46,13 @@ export const validateUser = async (req, res, next) => {
         return next(error); 
     }
 
-    const phoneRegex = /^[\d]{10}$/;
-    if (phone != null && !phoneRegex.test(phone)){
+    if (utils.validateFieldNotEmpty(phone) && !utils.validatePhone(phone)){
         const error = new Error(`Le numéro de téléphone doit être composé de 10 chiffres s'il est présent.`);
         error.statusCode = 422;
         return next(error); 
     }
 
-    const allowedRoles = ["user", "admin"];
-
-    if (!allowedRoles.includes(role)){
+    if (!utils.validateRole(role)){
         const error = new Error(`Le rôle de l'utilisateur est invalide.`);
         error.statusCode = 422;
         return next(error);
@@ -74,13 +70,13 @@ export const validateUserBasic = async (req, res, next) => {
         return next(error);  
     }
 
-    if (stringVide(email)){
+    if (utils.stringVide(email)){
         const error = new Error(`Le courriel est vide.`);
         error.statusCode = 422;
         return next(error);  
     }
 
-    if(stringVide(password)){
+    if(utils.stringVide(password)){
         const error = new Error(`Le mot de passe vide.`);
         error.statusCode = 422;
         return next(error); 
@@ -98,7 +94,7 @@ export const validateUserReplacement = async (req, res, next) => {
         return next(error);  
     }
 
-     if (stringVide(firstName) || stringVide(lastName)){
+     if (utils.stringVide(firstName) || utils.stringVide(lastName)){
         const error = new Error(`Le nom complet est requis.`);
         error.statusCode = 422;
         return next(error);  

@@ -1,18 +1,19 @@
-function stringVide(str){
-    return (!str || str.trim() === "");
-}
+import * as utils from "../utils/utils.mjs";
+
 
 
 export const validateCampsite = (req, res, next) => {
  const {name, location, description, type, pricePerNight, capacity, maxVehicleLength, amenities} = req.body;
 
-if (!name || !location || !type || pricePerNight == null || capacity == null){
+ // pricepernight = null et capacity = null
+
+if (!utils.validateFieldsNotEmpty([name, location, type]) || pricePerNight == null || capacity == null){
     const error = new Error(`Le nom, la localisation, le type, le prix par nuit et la capacité du site de campement sont requis.`);
     error.statusCode = 400;
     return next(error);
 }
 
-if (stringVide(name) || stringVide(location) || stringVide(type)){
+if (utils.stringVide(name) || utils.stringVide(location) || utils.stringVide(type)){
      const error = new Error(`Le nom, la localisation et le type du site de campement sont requis.`);
     error.statusCode = 422;
     return next(error);

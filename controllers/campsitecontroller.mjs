@@ -118,14 +118,9 @@ export async function createCampsite(req, res, next){
 
     try{
         const parametresRecherche = {
-    name: campsite.name,
-    location: campsite.location,
-    type: campsite.type,
-    pricePerNight: campsite.pricePerNight,
-    capacity: campsite.capacity,
-    maxVehicleLength: campsite.maxVehicleLength || null,
-    amenities: campsite.amenities || [],
-};
+            name: campsite.name,
+            location: campsite.location
+        };
 
         const doublon = await Campsite.findOne(parametresRecherche);
 
@@ -143,7 +138,7 @@ export async function createCampsite(req, res, next){
         data: campsite,
         path: `/api/campsites/${campsite._id}`,
         timestamp: new Date().toISOString()
-    })
+    });
     }
     catch(err){
        next(err);
@@ -159,15 +154,8 @@ export async function replaceCampsite(req, res, next){
             const parametresRecherche = {
             _id: {$ne: id},
             name: req.body.name,
-            location: req.body.location,
-            type: req.body.type,
-            pricePerNight: req.body.pricePerNight,
-            capacity: req.body.capacity
+            location: req.body.location
         };
-
-        if (isNaN(req.body.maxVehicleLength)) parametresRecherche.maxVehicleLength = req.body.maxVehicleLength;
-        if (!stringVide(req.body.description)) parametresRecherche.description = req.body.description;
-        if (req.body.amenities !== undefined) parametresRecherche.amenities = req.body.amenities;
 
         const doublon = await Campsite.findOne(parametresRecherche);
 

@@ -1,6 +1,9 @@
 import mongoose from "mongoose";
+import Campsite from "../models/campsite.mjs";
+import Reservation from "../models/reservation.mjs";
 
-export const validateReservation = (req, res, next) => {
+
+export const validateReservation = async (req, res, next) => {
 const id = req.params.id;
 const {campsite, user, startDate, endDate, guests, totalPrice, status} = req.body;
 
@@ -11,7 +14,7 @@ if (!campsite || !user || !startDate || !endDate || totalPrice == null){
     return next(error);
 }
 
-const unCampSite = mongoose.model("Campsite").findById(campsite);
+const unCampSite = await Campsite.findById(campsite);
 console.log(unCampSite);
 if (!unCampSite){
      const error = new Error("Le site de campement sélectionné pour la réservation n'existe pas.");
@@ -19,7 +22,7 @@ if (!unCampSite){
     return next(error);
 }
 
-const unUtilisateur = mongoose.model("Campsite").findById(user);
+const unUtilisateur = await Campsite.findById(user);
 if (!unUtilisateur){
      const error = new Error("L'utilisateur sélectionné pour la réservation n'existe pas.");
     error.statusCode = 404;
@@ -53,7 +56,7 @@ if (status != null && !possibleStatusValues.include(status)){
     return next(error); 
 }
 
-const reservationCourante = mongoose.model("Reservation").findById(id);
+const reservationCourante = await Reservation.findById(id);
 
 if (req.method == "PATCH" || req.method == "PUT"){
     const owner = reservationCourante.user;
