@@ -1,12 +1,11 @@
 import { STATUS_CODES } from "http";
 
 export const get404 = (err, req, res, next) => {
-    console.log("DANS LE 404");
     if (err.statusCode === 404)
     {
             res.status(404).json({
                 error: "Not Found",
-                message: `Route ${req.originalURL} non trouvée`,
+                message: err.message ?? `Route non trouvée`,
                 status: 404,
                 path: req.path,
                 timestamp: new Date().toISOString()

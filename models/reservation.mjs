@@ -17,14 +17,17 @@ const reservationSchema = new mongoose.Schema(
       required: [true, "La date de début est requise."],
       validate: {
         validator: async function(v) {
-         if (!this.endDate || v >= this.endDate) return false;
+         if (!this.endDate || v >= this.endDate)
+           return false;
 
-          const autreReservation = await mongoose.model("Reservation").findOne({
-          $or: [
-            { startDate: { $lte: this.endDate }, endDate: { $gte: v } }
-          ]
-        });
-      return !autreReservation;
+           const autreReservation = await mongoose.model("Reservation").findOne({
+              _id: { $ne: this._id },
+              campsite: this.campsite,
+              status: { $ne: "cancelled" },
+              startDate: { $lt: this.endDate },
+              endDate: { $gt: v }
+            });
+          return !autreReservation;
 
         },
         message: "La date de début doit être avant la date de fin et ne doit pas être pendant une autre réservation."
@@ -44,7 +47,11 @@ const reservationSchema = new mongoose.Schema(
       type: Number,
       validate: {
         validator: async function (v) {
-          if (v <= 0) return false;
+          if (v == null) 
+            return true;
+
+          if (v <= 0) 
+            return false;
 
           const campsite = await mongoose.model("Campsite").findById(this.campsite);
 

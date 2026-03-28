@@ -52,3 +52,9 @@ export const validateRoleAdmin = (role) => {
 export const stringVide = (str) => {
     return (!str || str.trim() === "");
 }
+
+export const validateReservationsStatus = (status) => {
+    const possibleStatusValues = ["pending", "confirmed", "cancelled"];
+
+    return (status != null && possibleStatusValues.includes(status.toLowerCase()));
+}
