@@ -5,8 +5,6 @@ import * as utils from "../utils/utils.mjs";
 export const validateCampsite = (req, res, next) => {
  const {name, location, description, type, pricePerNight, capacity, maxVehicleLength, amenities} = req.body;
 
- // pricepernight = null et capacity = null
-
 if (!utils.validateFieldsNotEmpty([name, location, type]) || pricePerNight == null || capacity == null){
     const error = new Error(`Le nom, la localisation, le type, le prix par nuit et la capacité du site de campement sont requis.`);
     error.statusCode = 400;

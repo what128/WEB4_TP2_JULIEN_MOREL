@@ -1,3 +1,4 @@
+import { now } from "mongoose";
 import Campsite from "../models/campsite.mjs";
 import Reservation from "../models/reservation.mjs";
 
@@ -234,8 +235,21 @@ export async function getAllAvailableCampsites(req, res, next){
 
 export async function deleteCampsite(req, res, next){
     const id = req.params.id;
+    const today = Date.now();
     try{
-        Campsite.findByIdAndDelete(id);
+        const reservationsDuCampsite = await Reservation.find(
+        {
+            $and: [{campsite: {$eq: id}}, {endDate : {$gte: today}}]
+        });
+
+        if (reservationsDuCampsite != null && reservationsDuCampsite.length > 0)
+        {
+            const error = new Error("Ce site de campement ne peut être supprimé, car il est en cours d'utilisation par une réservation.");
+                error.statusCode = 409;
+                throw error;
+        }
+
+       await Campsite.findByIdAndDelete(id);
         res.status(204).json({});
     }
     catch(err){

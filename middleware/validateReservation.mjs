@@ -15,6 +15,15 @@ if (!campsite || !startDate || !endDate){
     return next(error);
 }
 
+let dateDebut = new Date(startDate);
+let dateFin = new Date(endDate);
+
+if (dateFin <= dateDebut){
+    const error = new Error("La date de début doit être avant la date de fin.");
+    error.statusCode = 422;
+    return next(error);
+}
+
 const unCampSite = await Campsite.findById(campsite);
 console.log(unCampSite);
 if (!unCampSite){
@@ -27,15 +36,6 @@ const unUtilisateur = await User.findById(req.user.id);
 if (!unUtilisateur){
      const error = new Error("L'utilisateur sélectionné pour la réservation n'existe pas.");
     error.statusCode = 404;
-    return next(error);
-}
-
-let dateDebut = new Date(startDate);
-let dateFin = new Date(endDate);
-
-if (dateFin <= dateDebut){
-    const error = new Error("La date de début doit être avant la date de fin.");
-    error.statusCode = 422;
     return next(error);
 }
 
