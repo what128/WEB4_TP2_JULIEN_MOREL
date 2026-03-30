@@ -5,6 +5,7 @@ import {isAdmin, isAuth} from "../middleware/isAuth.mjs";
 
 const router = express.Router();
 
+router.get("/available", campsiteController.getAllAvailableCampsites);
 router.get("/:id", campsiteController.getCampsiteById);
 router.get("/", campsiteController.getAllCampsites);
 

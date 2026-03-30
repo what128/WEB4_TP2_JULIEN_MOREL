@@ -18,8 +18,7 @@ const campsiteSchema = new mongoose.Schema(
       values: ["tente", "rv", "chalet", "glamping", "arrière-pays", "autre"],
       message: (props) =>{
         return `Le type '${props}' n'est pas valide pour un site de camping.`
-      } 
-      
+      }
     },
       required: [true, "Le type de site de camping est requis"]
     },
@@ -54,7 +53,7 @@ const campsiteSchema = new mongoose.Schema(
         }
       },
       message: "La longueur maximale du véhicule est requise et doit être supérieure à 0 pour les sites RV"
-    }, // in meters, required for RV sites
+    },
     amenities: {
       type: [String],
       enum: [

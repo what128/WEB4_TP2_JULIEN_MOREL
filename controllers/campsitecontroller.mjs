@@ -1,6 +1,6 @@
-import { now } from "mongoose";
 import Campsite from "../models/campsite.mjs";
 import Reservation from "../models/reservation.mjs";
+import * as utils from "../utils/utils.mjs";
 
 function stringVide(str){
     return (!str || str.trim() === "");
@@ -206,27 +206,124 @@ export async function getAllCampsites(req, res, next){
     }
 }
 
+function validateDatesAndReturnError(startDate, endDate)
+{
+    if ((startDate && !endDate) || (endDate && !startDate))
+        {
+                const error = new Error("Lorsque vous utilisez des dates, ils doivent être une période.");
+                error.statusCode = 400;
+                return error; 
+        }
+
+        const dateDebut = new Date(startDate);
+        const dateFin = new Date(endDate);
+
+        if (dateFin <= dateDebut)
+        {
+                const error = new Error("La période à rechercher est invalide.");
+                error.statusCode = 422;
+                return error;
+        }
+        return null;
+}
+
+function validateSearchFieldsAndReturnError(req)
+{
+    const {startDate, endDate, type, guests, vehicleLength} = req.query;
+
+    if(!utils.validateAtLeastOneFieldExists([startDate, endDate, type, guests, vehicleLength])){
+        const error = new Error("Vous n'avez spécifié aucun critère de recherche pour un site de campement.");
+        error.statusCode = 400;
+        return error;
+    }  
+}
+
+function validateTypeAndReturnError(type)
+{
+    if (utils.validateFieldNotEmpty(type) && !utils.validateCampsiteType(type)){
+        const error = new Error("Le type de site que vous avez recherché est invalide.");
+        error.statusCode = 422;
+        return error;
+    }
+    return null;
+}
+
+function validateNumberFieldsAndReturnError(personnes, longeurVehicule)
+{
+    if ((personnes != null && personnes <=0) && (longeurVehicule != null && longeurVehicule <= 0))
+    {
+        const error = new Error("Les nombres doivent être positifs dans cette recherche.");
+        error.statusCode = 422;
+        return error;
+    }
+    return null;
+}
+
 export async function getAllAvailableCampsites(req, res, next){
     try{
-        const {startDate, endDate, type, guests, capacity, vehicleLength} = req.body;
+        let errorFields = validateSearchFieldsAndReturnError(req);
+        if (errorFields != null) throw errorFields;
 
-        if(!startDate && !endDate && !type && !guests && !capacity && !vehicleLength){
-            const error = new Error("Vous n'avez spécifié aucun critère de recherche pour un site de campement.");
-            error.statusCode = 400;
-            throw error;
+        const {startDate, endDate, type, guests, vehicleLength} = req.query;
+
+        let errorDate = validateDatesAndReturnError(startDate, endDate);
+        if (errorDate != null) throw errorDate;
+
+        const dateDebut = new Date(startDate);
+        const dateFin = new Date(endDate);
+
+        let errorType = validateTypeAndReturnError(type);
+        if (errorType != null) throw errorType;
+
+        let typeCampsite = null;
+
+        const personnes = guests ? parseInt(guests) : null;
+        const longeurVehicule = vehicleLength ? parseFloat(vehicleLength) : null;
+
+        let errorNumberFields = validateNumberFieldsAndReturnError(personnes, longeurVehicule);
+        if (errorNumberFields != null) throw errorNumberFields;        
+
+       const parametresRechercheReservation = {};
+
+        if (startDate && endDate) {
+            parametresRechercheReservation.startDate = { $lt: dateFin };
+            parametresRechercheReservation.endDate = { $gt: dateDebut };
         }
 
-        if (type){
-            const typesDeSites = ["tente", "rv", "chalet", "glamping", "arrière-pays", "autre"];
-            if (!typesDeSites.includes(type.toLowerCase())){
-                const error = new Error("Le type de site que vous avez recherché est invalide.");
-                error.statusCode = 422;
-                throw error;
-            }
-            if (type.toLowerCase() === "rv" && !vehicleLength){
-                const error = new Error("Vous devez sp")
-            }
+        const reservations = await Reservation.find(parametresRechercheReservation).select('campsite');
+
+        const campsitesIndisponibles = reservations.map(r => r.campsite);
+
+        const parametresRechercheCampsite = {};
+
+        if (type) {
+            typeCampsite = type.toLowerCase();
+            parametresRechercheCampsite.type = { $eq: typeCampsite };
         }
+
+        if (guests) {
+            parametresRechercheCampsite.capacity = { $gte: personnes };
+        }
+
+        if (vehicleLength) {
+            parametresRechercheCampsite.maxVehicleLength = { $gte: longeurVehicule };
+        }
+
+        if (campsitesIndisponibles.length > 0) {
+            parametresRechercheCampsite._id = { $nin: campsitesIndisponibles };
+        }
+
+        const availableCampsites = await Campsite.find(parametresRechercheCampsite);
+
+        res.status(200).json(
+            {
+                status: 200,
+                message: "Sites de campement disponibles récupérés avec succès.",
+                data: availableCampsites,
+                path: `/api/campsites/available`,
+                timestamp: new Date().toISOString()
+            }
+        )
     }
     catch(err){
         next(err);

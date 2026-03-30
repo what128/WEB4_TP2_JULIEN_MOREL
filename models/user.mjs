@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import * as utils from "../utils/utils.mjs";
 
 const userSchema = new mongoose.Schema(
   {
@@ -16,8 +17,7 @@ const userSchema = new mongoose.Schema(
     validate: [
     {
       validator: function (v) {
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        return emailRegex.test(v);
+        return utils.validateEmail(v);
     },
     message: "Veuillez fournir une adresse email valide."
     },
@@ -33,14 +33,20 @@ const userSchema = new mongoose.Schema(
     phone: { type: String,
       validate: {
         validator: function(v){
-          const phoneRegex = /^[\d]{10}$/;
-          return phoneRegex.test(v);
-        }
+          return utils.validatePhone(v);
+        },
+        message: "Le numéro de téléphone est invalide."
       }
      },
     password: { 
       type: String,
       required: [true, "Le mot de passe est requis."],
+      validate: {
+        validator: function(v) {
+          return utils.validatePassword(v);
+        },
+        message: "Le mot de passe ne correspond pas aux exigences de sécurité"
+      },
       select: false
      },
     role: {

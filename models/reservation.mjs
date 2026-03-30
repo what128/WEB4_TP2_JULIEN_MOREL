@@ -1,4 +1,6 @@
 import mongoose from "mongoose";
+import Reservation from "../models/reservation.mjs";
+import Campsite from "../models/campsite.mjs";
 
 const reservationSchema = new mongoose.Schema(
   {
@@ -20,7 +22,7 @@ const reservationSchema = new mongoose.Schema(
          if (!this.endDate || v >= this.endDate)
            return false;
 
-           const autreReservation = await mongoose.model("Reservation").findOne({
+           const autreReservation = await Reservation.findOne({
               _id: { $ne: this._id },
               campsite: this.campsite,
               status: { $ne: "cancelled" },
@@ -53,7 +55,7 @@ const reservationSchema = new mongoose.Schema(
           if (v <= 0) 
             return false;
 
-          const campsite = await mongoose.model("Campsite").findById(this.campsite);
+          const campsite = await Campsite.findById(this.campsite);
 
           if (!campsite) return false;
 
@@ -73,7 +75,7 @@ const reservationSchema = new mongoose.Schema(
           validator: async function(v) {
             if (!this._id) return true;
 
-            const documentExistant = await mongoose.model("Reservation").findById(this._id);
+            const documentExistant = await Reservation.findById(this._id);
 
             if (!documentExistant) return true;
             
