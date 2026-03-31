@@ -2,10 +2,18 @@ import Campsite from "../models/campsite.mjs";
 import Reservation from "../models/reservation.mjs";
 import * as utils from "../utils/utils.mjs";
 
-function stringVide(str){
-    return (!str || str.trim() === "");
-}
 
+
+/**
+ * Retrouve un site de campement par son id.
+ *
+ * @export
+ * @async
+ * @param {*} req La requête envoyée par le client
+ * @param {*} res La réponse à retourner au client
+ * @param {*} next Le prochain middleware à exécuter, s'il y a une erreur.
+ * @returns {*} 
+ */
 export async function getCampsiteById(req, res, next){
     const id = req.params.id;
     try {
@@ -31,7 +39,14 @@ export async function getCampsiteById(req, res, next){
     }
 }
 
-function creerObjetCampsite(req, id = -1){
+
+/**
+ * Créée un objet campsite à partir de la requête envoyée par le client.
+ *
+ * @param {*} req La requête envoyée par le client, contenant les informations du site de campement.
+ * @returns {*} L'objet campsite à rajouter dans la base de données.
+ */
+function creerObjetCampsite(req){
 const {name, location, description, type, pricePerNight, capacity, maxVehicleLength, amenities} = req.body;
     let campsite = null;
 
@@ -90,6 +105,14 @@ const {name, location, description, type, pricePerNight, capacity, maxVehicleLen
     return campsite;
 }
 
+
+/**
+ * Remplace les propriétés d'un objet campsite par les propriétés dans la requête du client
+ *
+ * @param {*} campsite Le site de campement à remplacer.
+ * @param {*} req La requête envoyée par le client.
+ * @returns {*} Le site de campement avec ses propriété mises à jour.
+ */
 function remplacerObjetCampsite(campsite, req) {
     const { name, location, description, type, pricePerNight, capacity, maxVehicleLength, amenities } = req.body;
 
@@ -114,6 +137,17 @@ function remplacerObjetCampsite(campsite, req) {
     return campsite;
 }
 
+
+/**
+ * Ajoute un objet campsite dans la base de données à partir d'une requête.
+ *
+ * @export
+ * @async
+ * @param {*} req La requête envoyée par le client.
+ * @param {*} res La réponse à retourner au client.
+ * @param {*} next Le prochain middleware à appeler, s'il y a une erreur.
+ * @returns {*} Cette fonction ne retourne rien.
+ */
 export async function createCampsite(req, res, next){
    let campsite = creerObjetCampsite(req);
 
@@ -146,6 +180,17 @@ export async function createCampsite(req, res, next){
     }
 }
 
+
+/**
+ * Remplace un objet campsite dans la base de données à partir d'une requête.
+ *
+ * @export
+ * @async
+ * @param {*} req La requête envoyée par le client
+ * @param {*} res La réponse à retourner au client.
+ * @param {*} next Le prochain middleware à appeler, en cas d'erreur.
+ * @returns {*} Cette fonction ne retourne rien.
+ */
 export async function replaceCampsite(req, res, next){
   const id = req.params.id;
     try {
@@ -188,13 +233,31 @@ export async function replaceCampsite(req, res, next){
     }  
 }
 
+
+/**
+ * Envoi au client la liste de tous les sites de campement, ou bien filtrés par type.
+ *
+ * @export
+ * @async
+ * @param {*} req La requête envoyée par le client.
+ * @param {*} res La réponse à retourner au client.
+ * @param {*} next le prochain middleware à appeler, s'il y a une erreur.
+ * @returns {*} Cette fonction ne retourne rien.
+ */
 export async function getAllCampsites(req, res, next){
     try{
-        const campSites = await Campsite.find();
+        const type = req.query.type;
+        if (!utils.stringVide(type) && !utils.validateCampsiteType(type))
+        {
+            const error = new Error("Le type de site de camping n'est pas valide.");
+            error.statusCode = 422;
+            throw error;   
+        }
+        const campSites = !utils.stringVide(type) ? await Campsite.find({type: {$eq: type}}) : await Campsite.find();
         if (campSites.length >= 0){
             res.status(200).json({
                 status: 200,
-                message: "SItes de campement récupérés avec succès.",
+                message: "Sites de campement récupérés avec succès.",
                 data: campSites,
                 path: `/api/campsites/`,
                 timestamp: new Date().toISOString()
@@ -206,6 +269,14 @@ export async function getAllCampsites(req, res, next){
     }
 }
 
+
+/**
+ * Valide la date de début et la date de fin d'une période, et retourne une erreur si la validation échoue.
+ *
+ * @param {*} startDate La date de début de la période.
+ * @param {*} endDate La date de fin de la période.
+ * @returns {*} Un objet d'erreur si la validation échoue, null autrement.
+ */
 function validateDatesAndReturnError(startDate, endDate)
 {
     if ((startDate && !endDate) || (endDate && !startDate))
@@ -227,6 +298,14 @@ function validateDatesAndReturnError(startDate, endDate)
         return null;
 }
 
+
+/**
+ * Valide si au moins un paramètre de recherche est spécifié dans la recherche d'un site de campement, et retourne
+ * une erreur si la validation échoue.
+ *
+ * @param {*} req La requête de recherche envoyée par le client.
+ * @returns {*} Un objet d'erreur si la validation échoue, null autrement.
+ */
 function validateSearchFieldsAndReturnError(req)
 {
     const {startDate, endDate, type, guests, vehicleLength} = req.query;
@@ -238,6 +317,12 @@ function validateSearchFieldsAndReturnError(req)
     }  
 }
 
+/**
+ * Valide le type de site de campement, et retourne une erreur si la validation échoue.
+ *
+ * @param {*} type Le type du site de campement recherché.
+ * @returns {*} Un objet d'erreur si la validation échoue, null autrement.
+ */
 function validateTypeAndReturnError(type)
 {
     if (utils.validateFieldNotEmpty(type) && !utils.validateCampsiteType(type)){
@@ -248,6 +333,15 @@ function validateTypeAndReturnError(type)
     return null;
 }
 
+
+/**
+ * Valide que le nombre de personnes et/ou la longueur du véhicule pour la recherche d'un site de campement
+ * `sont biens des nombres supérieurs à 0, et retourne une erreur si la validation échoue.
+ *
+ * @param {*} personnes Le nombre de personnes dans la recherche.
+ * @param {*} longeurVehicule La longueur du véhicule minimale recherchée.
+ * @returns {*} Un objet d'erreur si la validation échoue, null autrement.
+ */
 function validateNumberFieldsAndReturnError(personnes, longeurVehicule)
 {
     if ((personnes != null && personnes <=0) && (longeurVehicule != null && longeurVehicule <= 0))
@@ -259,6 +353,17 @@ function validateNumberFieldsAndReturnError(personnes, longeurVehicule)
     return null;
 }
 
+
+/**
+ * Recherche des sites de campement disponibles selon certains critères spécifiés par l'utilisateur.
+ *
+ * @export
+ * @async
+ * @param {*} req La requête envoyée par le client.
+ * @param {*} res La réponse à retourner au client.
+ * @param {*} next Le prochain middleware à appeler, s'il y a un erreur.
+ * @returns {*} Cette fonction ne retourne rien.
+ */
 export async function getAllAvailableCampsites(req, res, next){
     try{
         let errorFields = validateSearchFieldsAndReturnError(req);
@@ -330,6 +435,17 @@ export async function getAllAvailableCampsites(req, res, next){
     }
 }
 
+
+/**
+ * Supprime un site de campement à partir de son id dans la base de données.
+ *
+ * @export
+ * @async
+ * @param {*} req La requête envoyée par l'utilisateur.
+ * @param {*} res La réponse à retourner à l'utilisateur.
+ * @param {*} next Le prochain middleware à appeler, s'il y a une erreur.
+ * @returns {*} Cette fonction ne retourne rien.
+ */
 export async function deleteCampsite(req, res, next){
     const id = req.params.id;
     const today = Date.now();
