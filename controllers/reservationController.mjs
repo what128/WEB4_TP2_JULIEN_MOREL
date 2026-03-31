@@ -2,6 +2,17 @@ import Reservation from "../models/reservation.mjs";
 import Campsite from "../models/campsite.mjs";
 import * as utils from "../utils/utils.mjs";
 
+
+/**
+ * Retrouve une réservation par son identifiant dans la base de données.
+ *
+ * @export
+ * @async
+ * @param {*} req La requête envoyée par le client.
+ * @param {*} res La réponse à retourner au client.
+ * @param {*} next Le prochain middleware à appeler, en cas d'erreur.
+ * @returns {*} Cette fonction ne retoune rien.
+ */
 export async function getReservationById(req, res, next){
     const id = req.params.id;
     try {
@@ -35,11 +46,21 @@ export async function getReservationById(req, res, next){
     }
 }
 
+
+/**
+ * Retrouve les réservations d'un utilisateur par son état.
+ *
+ * @export
+ * @async
+ * @param {*} req La requête envoyée par l'utilisateur.
+ * @param {*} res La réponse à retourner à l'utilisateur.
+ * @param {*} next Le prochain middleware à appeler, en cas d'erreur.
+ * @returns {*} Cette fonction ne retourne rien.
+ */
 export async function getMyReservationsByStatus(req, res, next){
     const statusRequete = req.query.status;
-    const possibleStatusValues = ["pending", "confirmed", "cancelled"];
     try{
-            if (!possibleStatusValues.includes(statusRequete)){
+            if (!utils.validateReservationsStatus(statusRequete)){
                 let error = new Error(`Le statut ${statusRequete} n'est pas valide.`);
                 error.statusCode = 422;
                 throw error;
@@ -65,6 +86,17 @@ export async function getMyReservationsByStatus(req, res, next){
     }
 }
 
+
+/**
+ * Remplace une réservation dans la base de données par les nouvelles propriétés définies dans la requête du client.
+ *
+ * @export
+ * @async
+ * @param {*} req La requête envoyée par le client.
+ * @param {*} res La réponse à retourner au client.
+ * @param {*} next Le prochain middleware à appeler, en cas d'erreur.
+ * @returns {*} Cette fonction ne retourne rien.
+ */
 export async function replaceReservation(req, res, next){
   const id = req.params.id;
     try {
@@ -90,7 +122,7 @@ export async function replaceReservation(req, res, next){
             throw error;
         }
 
-        uneReservation = await creerObjetReservation(req, uneReservation);
+        uneReservation = await creerOuRemplacerObjetReservation(req, uneReservation);
         await uneReservation.save();
 
         res.status(200).json({
@@ -112,7 +144,16 @@ export async function replaceReservation(req, res, next){
     }  
 }
 
-async function creerObjetReservation(req, uneReservationExistante = null){
+
+/**
+ * Créée ou remplace une réservation dans la base de données en fonction de la requête du client.
+ *
+ * @async
+ * @param {*} req La requête envoyée par le client
+ * @param {*} [uneReservationExistante=null] Une réservation existante, si le but est de la remplacer.
+ * @returns {unknown} L'objet reservation qui a été créé ou modifié
+ */
+async function creerOuRemplacerObjetReservation(req, uneReservationExistante = null){
 const NB_MILLISECONDES_POUR_UNE_JOURNEE = 86400000;
 const {campsite, startDate, endDate, guests} = req.body;
 const status = "pending";
@@ -158,8 +199,19 @@ else
     return uneReservationExistante ?? uneReservation;
 }
 
+
+/**
+ * Créée une réservation dans la base de données en fonction des paramètres fournis par le client.
+ *
+ * @export
+ * @async
+ * @param {*} req La requête envoyée par le client.
+ * @param {*} res La réponse à retourner au client.
+ * @param {*} next Le prochain middleware à appeler, s'il y a une erreur.
+ * @returns {*} Cette fonction ne retourne rien.
+ */
 export async function createReservation(req, res, next){
-   let uneReservation = await creerObjetReservation(req);
+   let uneReservation = await creerOuRemplacerObjetReservation(req);
 
     try{
         await uneReservation.save();
@@ -177,6 +229,17 @@ export async function createReservation(req, res, next){
     }
 }
 
+
+/**
+ * Retrouve toutes les réservations d'un utilisateur dans la base de données.
+ *
+ * @export
+ * @async
+ * @param {*} req La requête envoyée par le client.
+ * @param {*} res La réponse retournée au client.
+ * @param {*} next Le prochain middleware à appeler, s'il y a une erreur.
+ * @returns {*} Cette fonction ne retourne rien.
+ */
 export async function getMyReservations(req, res, next){
     const status = req.query.status;
     if (status != null){
@@ -202,6 +265,17 @@ export async function getMyReservations(req, res, next){
     }
 }
 
+
+/**
+ * Modifie le statut d'une réservation appratenant à l'utilisateur dans la base de données.
+ *
+ * @export
+ * @async
+ * @param {*} req La requête envoyée par l'utilisateur.
+ * @param {*} res La réponse à retourner à l'utilisateur.
+ * @param {*} next Le prochain middleware à appeler, en cas d'erreur.
+ * @returns {*} Cette fonction ne retourne rien.
+ */
 export async function changeStatusReservation(req, res, next) {
     try{
         let uneReservation = await Reservation.findById(req.params.id);
