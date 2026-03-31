@@ -2,34 +2,35 @@ import User from "../models/user.mjs";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 import bcrypt from "bcrypt";
+import * as utils from "../utils/utils.mjs";
 
 dotenv.config();
 
+/**
+ * Créée un utilisateur dans la base de données à partir des informations que le client a envoyé.
+ *
+ * @export
+ * @async
+ * @param {*} req La requête envoyée par le client.
+ * @param {*} res La réponse à retourner au client.
+ * @param {*} next Le prochain middleare à appeler, s'il y a une erreur.
+ * @returns {*} Cette fonction ne retourne rien.
+ */
 export async function createUser(req, res, next){
     const {firstName, lastName, email, phone, password, role} = req.body;
-
     try{
         let hashedPassword = await bcrypt.hash(password, 15);
-        let unUtilisateur = null;
-        if (!phone){
-            unUtilisateur = new User({
-                firstName: firstName,
-                lastName: lastName,
-                email: email,
-                password: hashedPassword,
-                role: role
+        let unUtilisateur = new User({
+            firstName: firstName,
+            lastName: lastName,
+            email: email,
+            password: hashedPassword,
+            role: role
             });
-        }
-        else
+
+        if (phone)
         {
-             unUtilisateur = new User({
-                firstName: firstName,
-                lastName: lastName,
-                email: email,
-                phone: phone,
-                password: hashedPassword,
-                role: role
-            });
+            unUtilisateur.phone = phone;
         }
         
         await unUtilisateur.save();
@@ -53,13 +54,22 @@ export async function createUser(req, res, next){
     }
 }
 
+
+/**
+ * Initialise un token pour un utilisateur existant.
+ *
+ * @export
+ * @async
+ * @param {*} req La requête de connexion envoyée par le client.
+ * @param {*} res La réponse à retourner au client.
+ * @param {*} next Le prochain middleware à appeler, s'il y a une erreur.
+ * @returns {*} Cette fonction ne retourne rien.
+ */
 export async function loginUser(req, res, next){
     const {email, password} = req.body;
     try{
-        
         const user = await User.findOne({email: email}).select("+password");
 
-        console.log("user found: ", user);
         if(!user){
             const error = new Error(`Courriel ou mot de passe invalide.`);
             error.statusCode = 401;
@@ -77,10 +87,6 @@ export async function loginUser(req, res, next){
         const userResponse = user.toObject();
 
         delete userResponse.password;
-
-        console.log("user object ", userResponse);
-
-        console.log("avant signature token");
         
         const token = jwt.sign({
             email: user.email,
@@ -91,8 +97,6 @@ export async function loginUser(req, res, next){
         {
             expiresIn: "1h"
         });
-
-        console.log("apres signature token");
 
         const decodedToken = jwt.verify(token, process.env.JWT_SECRET);
 
@@ -112,6 +116,17 @@ export async function loginUser(req, res, next){
     }
 }
 
+
+/**
+ * Retrouve les informations du profil de l'utilisateur.
+ *
+ * @export
+ * @async
+ * @param {*} req La requête envoyée par le client. 
+ * @param {*} res La réponse à retourner au client.
+ * @param {*} next Le prochain middleware à appeler, s'il y a une erreur.
+ * @returns {unknown} Cette fonction retourne une erreur, si nécessaire.
+ */
 export async function getProfileInfo(req, res, next){
     const authHeader = req.get("Authorization");
 
@@ -122,7 +137,6 @@ export async function getProfileInfo(req, res, next){
     }
 
     const token = authHeader.split(" ")[1];
-
     let decodedToken;
 
     try{
@@ -146,16 +160,22 @@ export async function getProfileInfo(req, res, next){
             timestamp: new Date().toISOString()
         });
 
-
-        console.log("req.user", req.user);
         next();
     }
     catch(err){
         err.statusCode = 401;
-        return next(err);
+        next(err);
     }
 }
 
+
+/**
+ * Modifie les propriétés d'un objet utilisateur à partir de la requête de l'utilisateur.
+ *
+ * @param {*} user L'utilisateur à modifier.
+ * @param {*} req La requête envoyée par le client.
+ * @returns {*} L'objet utilisateur qui a été modifié.
+ */
 function replaceUserObject(user, req){
     const {firstName, lastName, phone, role} = req.body;
 
@@ -170,9 +190,19 @@ function replaceUserObject(user, req){
     return user;
 }
 
+
+/**
+ * Modifie un objet utilisateur dans la base de données à partir de la requête du client.
+ *
+ * @export
+ * @async
+ * @param {*} req La requête envoyée par le client.
+ * @param {*} res La réponse à retourner au client. 
+ * @param {*} next Le prochain middleware à appeler, s'il y a une erreur.
+ * @returns {unknown} Cette fonction retourne une erreur, si nécessaire.
+ */
 export async function replaceProfileInfo(req, res, next){
     const authHeader = req.get("Authorization");
-
     if(!authHeader){
         return res.status(401).json({
             error: "Non authentifié",
@@ -180,9 +210,7 @@ export async function replaceProfileInfo(req, res, next){
     }
 
     const token = authHeader.split(" ")[1];
-
     let decodedToken;
-
     try{
         decodedToken = jwt.verify(token, process.env.JWT_SECRET);
 
@@ -212,13 +240,23 @@ export async function replaceProfileInfo(req, res, next){
     }
     catch(err){
         err.statusCode = 401;
-        return next(err);
+        next(err);
     }
 }
 
+
+/**
+ * Change le mot de passe d'un compte utilisateur dans la base de données.
+ *
+ * @export
+ * @async
+ * @param {*} req La requête envoyée par l'utilisateur.
+ * @param {*} res La réponse à retourner à l'utilisateur.
+ * @param {*} next Le prochain middleware à exécuter, s'il y a une erreur.
+ * @returns {unknown} Cette fonction retourne une erreur, si nécessaire.
+ */
 export async function changePassword(req, res, next){
     const {currentPassword, newPassword} = req.body;
-
     try{
         if (!currentPassword || !newPassword){
             const error = new Error(`Le nouveau et l'ancien mot de passe sont requis.`);
@@ -226,8 +264,7 @@ export async function changePassword(req, res, next){
             throw error;
         }
     
-        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$/;
-        if (!passwordRegex.test(newPassword)){
+        if (!utils.validatePassword(newPassword)){
             const error = new Error(`Le mot de passe doit contenir 8 caractères, dont au moins 1 majuscule, minuscule, caractère spécial et chiffre.`);
             error.statusCode = 422;
             return next(error);
@@ -242,7 +279,6 @@ export async function changePassword(req, res, next){
         }
     
         const isEqual = await bcrypt.compare(currentPassword, user.password);
-    
         if(!isEqual){
             const error = new Error(`L'ancien mot de passe est invalide.`);
             error.statusCode = 401;
@@ -250,7 +286,6 @@ export async function changePassword(req, res, next){
         }
 
         let hashedPassword = await bcrypt.hash(newPassword, 15);
-
         user.password = hashedPassword;
         await user.save();
 
@@ -261,14 +296,8 @@ export async function changePassword(req, res, next){
             path: `/api/auth/profile`,
             timestamp: new Date().toISOString()
         });
-
-
     }
     catch(err){
         next(err);
     }
-    
-
-
-    
 }

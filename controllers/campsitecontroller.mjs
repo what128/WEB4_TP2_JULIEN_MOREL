@@ -2,8 +2,6 @@ import Campsite from "../models/campsite.mjs";
 import Reservation from "../models/reservation.mjs";
 import * as utils from "../utils/utils.mjs";
 
-
-
 /**
  * Retrouve un site de campement par son id.
  *
@@ -12,9 +10,9 @@ import * as utils from "../utils/utils.mjs";
  * @param {*} req La requête envoyée par le client
  * @param {*} res La réponse à retourner au client
  * @param {*} next Le prochain middleware à exécuter, s'il y a une erreur.
- * @returns {*} 
+ * @returns {*} Cette fonction ne retourne rien.
  */
-export async function getCampsiteById(req, res, next){
+export async function getCampsiteById(req, res, next) {
     const id = req.params.id;
     try {
         const unCampSite = await Campsite.findById(id);
@@ -27,14 +25,13 @@ export async function getCampsiteById(req, res, next){
                 path: `/api/campsites/${id}`,
                 timestamp: new Date().toISOString()
             });
-        } 
-        else
-        {
+        }
+        else {
             const error = new Error(`Le site de campement avec l'id ${id} est introuvable.`);
             error.statusCode = 404;
             throw error;
         }
-    } catch(err) {
+    } catch (err) {
         next(err);
     }
 }
@@ -46,61 +43,24 @@ export async function getCampsiteById(req, res, next){
  * @param {*} req La requête envoyée par le client, contenant les informations du site de campement.
  * @returns {*} L'objet campsite à rajouter dans la base de données.
  */
-function creerObjetCampsite(req){
-const {name, location, description, type, pricePerNight, capacity, maxVehicleLength, amenities} = req.body;
-    let campsite = null;
+function creerObjetCampsite(req) {
+    const { name, location, description, type, pricePerNight, capacity, maxVehicleLength, amenities } = req.body;
+    let campsite = new Campsite({
+        name: name,
+        location: location,
+        type: type,
+        pricePerNight: pricePerNight,
+        capacity: capacity
+    });
 
-    if (!maxVehicleLength){
-        if (!amenities){
-            campsite = new Campsite({
-            name,
-            location,
-            description,
-            type,
-            pricePerNight,
-            capacity
-        });
-        }
-        else
-        {
-            campsite = new Campsite({
-                name,
-                location,
-                description,
-                type,
-                pricePerNight,
-                capacity,
-                amenities
-            });
-        }
+    if (maxVehicleLength) {
+        campsite.maxVehicleLength = maxVehicleLength;
     }
-    else
-    {
-        if(!amenities)
-        {
-            campsite = new Campsite({
-            name,
-            location,
-            description,
-            type,
-            pricePerNight,
-            capacity,
-            maxVehicleLength
-        });
-        }
-        else
-        {
-            campsite = new Campsite({
-            name,
-            location,
-            description,
-            type,
-            pricePerNight,
-            capacity,
-            maxVehicleLength,
-            amenities
-        });
-        } 
+    if (amenities) {
+        campsite.amenities = amenities;
+    }
+    if (description) {
+        campsite.description = description;
     }
     return campsite;
 }
@@ -148,10 +108,9 @@ function remplacerObjetCampsite(campsite, req) {
  * @param {*} next Le prochain middleware à appeler, s'il y a une erreur.
  * @returns {*} Cette fonction ne retourne rien.
  */
-export async function createCampsite(req, res, next){
-   let campsite = creerObjetCampsite(req);
-
-    try{
+export async function createCampsite(req, res, next) {
+    let campsite = creerObjetCampsite(req);
+    try {
         const parametresRecherche = {
             name: campsite.name,
             location: campsite.location
@@ -159,7 +118,7 @@ export async function createCampsite(req, res, next){
 
         const doublon = await Campsite.findOne(parametresRecherche);
 
-        if (doublon){
+        if (doublon) {
             const error = new Error("Un site de camping identique existe déjà.");
             error.statusCode = 409;
             throw error;
@@ -168,15 +127,15 @@ export async function createCampsite(req, res, next){
         await campsite.save();
         res.location(`/api/campsites/${campsite._id}`);
         res.status(201).json({
-        status: 201,
-        message: "Site de campement ajouté",
-        data: campsite,
-        path: `/api/campsites/${campsite._id}`,
-        timestamp: new Date().toISOString()
-    });
+            status: 201,
+            message: "Site de campement ajouté",
+            data: campsite,
+            path: `/api/campsites/${campsite._id}`,
+            timestamp: new Date().toISOString()
+        });
     }
-    catch(err){
-       next(err);
+    catch (err) {
+        next(err);
     }
 }
 
@@ -191,70 +150,68 @@ export async function createCampsite(req, res, next){
  * @param {*} next Le prochain middleware à appeler, en cas d'erreur.
  * @returns {*} Cette fonction ne retourne rien.
  */
-export async function replaceCampsite(req, res, next){
-  const id = req.params.id;
+export async function replaceCampsite(req, res, next) {
+    const id = req.params.id;
     try {
         let unCampSite = await Campsite.findById(id);
 
         if (unCampSite) {
             const parametresRecherche = {
-            _id: {$ne: id},
-            name: req.body.name,
-            location: req.body.location
-        };
+                _id: { $ne: id },
+                name: req.body.name,
+                location: req.body.location
+            };
 
-        const doublon = await Campsite.findOne(parametresRecherche);
+            const doublon = await Campsite.findOne(parametresRecherche);
 
-        if (doublon) {
-            const error = new Error("Un site de camping identique existe déjà.");
-            error.statusCode = 409;
-            throw error;
+            if (doublon) {
+                const error = new Error("Un site de camping identique existe déjà.");
+                error.statusCode = 409;
+                throw error;
+            }
+
+            unCampSite = remplacerObjetCampsite(unCampSite, req);
+            await unCampSite.save();
+
+            res.status(200).json({
+                status: 200,
+                message: "Le site de campement a été remplacé avec succès.",
+                data: unCampSite,
+                path: `/api/campsites/${unCampSite._id}`,
+                timestamp: new Date().toISOString()
+            })
         }
-
-        unCampSite = remplacerObjetCampsite(unCampSite, req);
-        await unCampSite.save();
-
-        res.status(200).json({
-            status: 200,
-            message: "Le site de campement a été remplaçé avec succès.",
-            data: unCampSite,
-            path: `/api/campsites/${unCampSite._id}`,
-            timestamp: new Date().toISOString()
-        })
-        } 
-        else
-        {
+        else {
             const error = new Error(`Le site de campement avec l'id ${id} est introuvable.`);
             error.statusCode = 404;
             throw error;
         }
-    } catch(err) {
+    } catch (err) {
         next(err);
-    }  
+    }
 }
 
 
 /**
- * Envoi au client la liste de tous les sites de campement, ou bien filtrés par type.
+ * Envoie au client la liste de tous les sites de campement, ou bien filtrés par type.
  *
  * @export
  * @async
  * @param {*} req La requête envoyée par le client.
  * @param {*} res La réponse à retourner au client.
- * @param {*} next le prochain middleware à appeler, s'il y a une erreur.
+ * @param {*} next Le prochain middleware à appeler, s'il y a une erreur.
  * @returns {*} Cette fonction ne retourne rien.
  */
-export async function getAllCampsites(req, res, next){
-    try{
+export async function getAllCampsites(req, res, next) {
+    try {
         const type = req.query.type;
-        if (!utils.stringVide(type) && !utils.validateCampsiteType(type))
-        {
-            const error = new Error("Le type de site de camping n'est pas valide.");
+        if (!utils.stringVide(type) && !utils.validateCampsiteType(type)) {
+            const error = new Error("Un type de site de campement devrait avoir une de ces valeurs: tente, rv, chalet, glamping, arrière-pays ou autre.");
             error.statusCode = 422;
-            throw error;   
+            throw error;
         }
-        const campSites = !utils.stringVide(type) ? await Campsite.find({type: {$eq: type}}) : await Campsite.find();
-        if (campSites.length >= 0){
+        const campSites = !utils.stringVide(type) ? await Campsite.find({ type: { $eq: type } }) : await Campsite.find();
+        if (campSites.length >= 0) {
             res.status(200).json({
                 status: 200,
                 message: "Sites de campement récupérés avec succès.",
@@ -264,7 +221,7 @@ export async function getAllCampsites(req, res, next){
             });
         }
     }
-    catch(err){
+    catch (err) {
         next(err);
     }
 }
@@ -277,25 +234,22 @@ export async function getAllCampsites(req, res, next){
  * @param {*} endDate La date de fin de la période.
  * @returns {*} Un objet d'erreur si la validation échoue, null autrement.
  */
-function validateDatesAndReturnError(startDate, endDate)
-{
-    if ((startDate && !endDate) || (endDate && !startDate))
-        {
-                const error = new Error("Lorsque vous utilisez des dates, ils doivent être une période.");
-                error.statusCode = 400;
-                return error; 
-        }
+function validateDatesAndReturnError(startDate, endDate) {
+    if ((startDate && !endDate) || (endDate && !startDate)) {
+        const error = new Error("Lorsque vous utilisez des dates, ils doivent former une période.");
+        error.statusCode = 400;
+        return error;
+    }
 
-        const dateDebut = new Date(startDate);
-        const dateFin = new Date(endDate);
+    const dateDebut = new Date(startDate);
+    const dateFin = new Date(endDate);
 
-        if (dateFin <= dateDebut)
-        {
-                const error = new Error("La période à rechercher est invalide.");
-                error.statusCode = 422;
-                return error;
-        }
-        return null;
+    if (dateFin <= dateDebut) {
+        const error = new Error("Les dates entrées ne correspond pas à une période de temps valide.");
+        error.statusCode = 422;
+        return error;
+    }
+    return null;
 }
 
 
@@ -306,15 +260,14 @@ function validateDatesAndReturnError(startDate, endDate)
  * @param {*} req La requête de recherche envoyée par le client.
  * @returns {*} Un objet d'erreur si la validation échoue, null autrement.
  */
-function validateSearchFieldsAndReturnError(req)
-{
-    const {startDate, endDate, type, guests, vehicleLength} = req.query;
+function validateSearchFieldsAndReturnError(req) {
+    const { startDate, endDate, type, guests, vehicleLength } = req.query;
 
-    if(!utils.validateAtLeastOneFieldExists([startDate, endDate, type, guests, vehicleLength])){
+    if (!utils.validateAtLeastOneFieldExists([startDate, endDate, type, guests, vehicleLength])) {
         const error = new Error("Vous n'avez spécifié aucun critère de recherche pour un site de campement.");
         error.statusCode = 400;
         return error;
-    }  
+    }
 }
 
 /**
@@ -323,10 +276,9 @@ function validateSearchFieldsAndReturnError(req)
  * @param {*} type Le type du site de campement recherché.
  * @returns {*} Un objet d'erreur si la validation échoue, null autrement.
  */
-function validateTypeAndReturnError(type)
-{
-    if (utils.validateFieldNotEmpty(type) && !utils.validateCampsiteType(type)){
-        const error = new Error("Le type de site que vous avez recherché est invalide.");
+function validateTypeAndReturnError(type) {
+    if (utils.validateFieldNotEmpty(type) && !utils.validateCampsiteType(type)) {
+        const error = new Error("Un type de site de campement devrait avoir une de ces valeurs: tente, rv, chalet, glamping, arrière-pays ou autre.");
         error.statusCode = 422;
         return error;
     }
@@ -342,10 +294,8 @@ function validateTypeAndReturnError(type)
  * @param {*} longeurVehicule La longueur du véhicule minimale recherchée.
  * @returns {*} Un objet d'erreur si la validation échoue, null autrement.
  */
-function validateNumberFieldsAndReturnError(personnes, longeurVehicule)
-{
-    if ((personnes != null && personnes <=0) && (longeurVehicule != null && longeurVehicule <= 0))
-    {
+function validateNumberFieldsAndReturnError(personnes, longeurVehicule) {
+    if ((personnes != null && personnes <= 0) && (longeurVehicule != null && longeurVehicule <= 0)) {
         const error = new Error("Les nombres doivent être positifs dans cette recherche.");
         error.statusCode = 422;
         return error;
@@ -364,12 +314,12 @@ function validateNumberFieldsAndReturnError(personnes, longeurVehicule)
  * @param {*} next Le prochain middleware à appeler, s'il y a un erreur.
  * @returns {*} Cette fonction ne retourne rien.
  */
-export async function getAllAvailableCampsites(req, res, next){
-    try{
+export async function getAllAvailableCampsites(req, res, next) {
+    try {
         let errorFields = validateSearchFieldsAndReturnError(req);
         if (errorFields != null) throw errorFields;
 
-        const {startDate, endDate, type, guests, vehicleLength} = req.query;
+        const { startDate, endDate, type, guests, vehicleLength } = req.query;
 
         let errorDate = validateDatesAndReturnError(startDate, endDate);
         if (errorDate != null) throw errorDate;
@@ -386,16 +336,16 @@ export async function getAllAvailableCampsites(req, res, next){
         const longeurVehicule = vehicleLength ? parseFloat(vehicleLength) : null;
 
         let errorNumberFields = validateNumberFieldsAndReturnError(personnes, longeurVehicule);
-        if (errorNumberFields != null) throw errorNumberFields;        
+        if (errorNumberFields != null) throw errorNumberFields;
 
-       const parametresRechercheReservation = {};
+        const parametresRechercheReservation = {};
 
         if (startDate && endDate) {
             parametresRechercheReservation.startDate = { $lt: dateFin };
             parametresRechercheReservation.endDate = { $gt: dateDebut };
         }
 
-        const reservations = await Reservation.find(parametresRechercheReservation).select('campsite');
+        const reservations = await Reservation.find(parametresRechercheReservation);
 
         const campsitesIndisponibles = reservations.map(r => r.campsite);
 
@@ -430,7 +380,7 @@ export async function getAllAvailableCampsites(req, res, next){
             }
         )
     }
-    catch(err){
+    catch (err) {
         next(err);
     }
 }
@@ -446,26 +396,25 @@ export async function getAllAvailableCampsites(req, res, next){
  * @param {*} next Le prochain middleware à appeler, s'il y a une erreur.
  * @returns {*} Cette fonction ne retourne rien.
  */
-export async function deleteCampsite(req, res, next){
+export async function deleteCampsite(req, res, next) {
     const id = req.params.id;
     const today = Date.now();
-    try{
+    try {
         const reservationsDuCampsite = await Reservation.find(
-        {
-            $and: [{campsite: {$eq: id}}, {endDate : {$gte: today}}]
-        });
+            {
+                $and: [{ campsite: { $eq: id } }, { endDate: { $gte: today } }]
+            });
 
-        if (reservationsDuCampsite != null && reservationsDuCampsite.length > 0)
-        {
+        if (reservationsDuCampsite != null && reservationsDuCampsite.length > 0) {
             const error = new Error("Ce site de campement ne peut être supprimé, car il est en cours d'utilisation par une réservation.");
-                error.statusCode = 409;
-                throw error;
+            error.statusCode = 409;
+            throw error;
         }
 
-       await Campsite.findByIdAndDelete(id);
+        await Campsite.findByIdAndDelete(id);
         res.status(204).json({});
     }
-    catch(err){
+    catch (err) {
         next(err);
     }
 }

@@ -4,55 +4,55 @@ import Campsite from "../models/campsite.mjs";
 
 const reservationSchema = new mongoose.Schema(
   {
-    user: { 
-      type: mongoose.Schema.Types.ObjectId, 
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: [true, "L'utilisateur est requis."]
-     },
+    },
     campsite: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Campsite",
       required: [true, "Le site de campement est requis."]
     },
-    startDate: { 
+    startDate: {
       type: Date,
       required: [true, "La date de début est requise."],
       validate: {
-        validator: async function(v) {
-         if (!this.endDate || v >= this.endDate)
-           return false;
+        validator: async function (v) {
+          if (!this.endDate || v >= this.endDate)
+            return false;
 
-           const autreReservation = await Reservation.findOne({
-              _id: { $ne: this._id },
-              campsite: this.campsite,
-              status: { $ne: "cancelled" },
-              startDate: { $lt: this.endDate },
-              endDate: { $gt: v }
-            });
+          const autreReservation = await Reservation.findOne({
+            _id: { $ne: this._id },
+            campsite: this.campsite,
+            status: { $ne: "cancelled" },
+            startDate: { $lt: this.endDate },
+            endDate: { $gt: v }
+          });
           return !autreReservation;
 
         },
         message: "La date de début doit être avant la date de fin et ne doit pas être pendant une autre réservation."
       }
     },
-    endDate: { 
+    endDate: {
       type: Date,
       required: [true, "La date de fin est requise."],
-       validate: {
-        validator: function(v) {
+      validate: {
+        validator: function (v) {
           return v > this.startDate;
         },
         message: "La date de début doit être une date précédant la date de fin."
       }
-   },
-    guests: { 
+    },
+    guests: {
       type: Number,
       validate: {
         validator: async function (v) {
-          if (v == null) 
+          if (v == null)
             return true;
 
-          if (v <= 0) 
+          if (v <= 0)
             return false;
 
           const campsite = await Campsite.findById(this.campsite);
@@ -61,8 +61,8 @@ const reservationSchema = new mongoose.Schema(
 
           return v <= campsite.capacity;
         },
-    message: "Le nombre de personnes dépasse la capacité du site de camping."
-  }
+        message: "Le nombre de personnes dépasse la capacité du site de camping."
+      }
     },
     vehicleLength: { type: Number },
     totalPrice: { type: Number },
@@ -72,13 +72,13 @@ const reservationSchema = new mongoose.Schema(
       default: "pending",
       validate: [
         {
-          validator: async function(v) {
+          validator: async function (v) {
             if (!this._id) return true;
 
             const documentExistant = await Reservation.findById(this._id);
 
             if (!documentExistant) return true;
-            
+
             return documentExistant.status !== "cancelled";
           },
           message: "Une réservation annulée ne peut pas être modifiée."
