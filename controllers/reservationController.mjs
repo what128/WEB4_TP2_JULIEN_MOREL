@@ -151,7 +151,7 @@ export async function replaceReservation(req, res, next) {
  */
 async function creerOuRemplacerObjetReservation(req, uneReservationExistante = null) {
     const NB_MILLISECONDES_POUR_UNE_JOURNEE = 86400000;
-    const { campsite, startDate, endDate, guests} = req.body;
+    const {campsite, startDate, endDate, guests} = req.body;
     const status = "pending";
     const user = req.user.id;
     const unCampsite = await Campsite.findById(campsite);
